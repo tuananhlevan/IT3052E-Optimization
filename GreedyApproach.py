@@ -83,7 +83,7 @@ for u in affected:
     for j in range(num_teams):
         can_do[u][j] = 0
 
-# Greedy approach implementation`
+# Greedy approach implementation
 def greedy_task_assignment(num_tasks, num_teams, task_duration, precedence, s, costs, can_do):
     # Sort tasks by duration in descending order (longest task first)
     tasks = sorted(range(num_tasks), key=lambda x: -task_duration[x])
@@ -99,11 +99,11 @@ def greedy_task_assignment(num_tasks, num_teams, task_duration, precedence, s, c
 
     # Assign tasks to teams
     while tasks:    # While there are still tasks
-        task = tasks[0] # Taking the first priority task
+        task = tasks.pop(0) # Taking the first priority task
         if max(can_do[task]) == 0:  # If can't do the task then remove it
             tasks.pop(0)
             continue
-        temp = 0
+        cant_do = False
         possible_teams = [team for team in range(num_teams) if can_do[task][team] == 1]
         # Sort teams by their available time and cost
         possible_teams = sorted(possible_teams, key=lambda team: (team_available_times[team], costs[task][team]))
@@ -111,32 +111,27 @@ def greedy_task_assignment(num_tasks, num_teams, task_duration, precedence, s, c
         # Determine the earliest start time for the task based on its precedence
         earliest_start_time = 0
         for u, v in precedence:
-            if v == task and max(can_do[u]) == 1:  # Task v must finish before task can start
+            if v == task and any(can_do[u]) == 1:  # Task v must finish before task can start
                 if task_end_times[u] != float('inf'):
                     earliest_start_time = max(earliest_start_time, task_end_times[u])
                 else:   # If not done yet, then push task v behind task u on the priority list
                     idx = tasks.index(u)
                     tasks.insert(idx + 1, task)
-                    tasks.pop(0)
-                    temp = 1
+                    cant_do = True
                     break
-        if temp:    # If pushed, then don't need to continue taking this task
+        if cant_do:    # If pushed, then don't need to continue taking this task
             continue
 
         # Assign the task to the first feasible team
-        for team in possible_teams:
-            # Ensure the task starts after the team is available and after its precedence constraints
-            task_start_times[task] = max(earliest_start_time, team_available_times[team])
-            task_end_times[task] = task_start_times[task] + task_duration[task]
-            task_assignments[task] = team
-
-            # Update the team's next available time
-            team_available_times[team] = task_end_times[task]
-
-            # Update task finish time for precedence-based calculations
-            task_finish_times[task] = task_end_times[task]
-            break
-        tasks.pop(0)
+        team = possible_teams[0]
+        # Ensure the task starts after the team is available and after its precedence constraints
+        task_start_times[task] = max(earliest_start_time, team_available_times[team])
+        task_end_times[task] = task_start_times[task] + task_duration[task]
+        task_assignments[task] = team
+        # Update the team's next available time
+        team_available_times[team] = task_end_times[task]
+        # Update task finish time for precedence-based calculations
+        task_finish_times[task] = task_end_times[task]
 
     return task_assignments, task_start_times, task_end_times
 
