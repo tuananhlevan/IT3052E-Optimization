@@ -1,0 +1,35 @@
+Given variables:
+N tasks: tasks[N]
+M teams: teams[M]
+Q precedence: precedence[Q] = (i, j)
+Availability: available[M] = s
+Cost matrix: costs[(i, j)] = c
+Tasks duration: duration[N]
+
+Extra work:
+find_cycles: find all cycles that are in precedence
+get_components: get all the components that are related to cycles and set can_do = 0
+
+Modeled variables:
+Assignment: assignment[N][M] = 0/1
+Start time: start[N]
+End time: end[N]
+Team can do task: can_do[N][M] = 0/1: can_do[i][j] = 1 if task i can be assigned to team j 
+Completion time: complete
+
+Constraints:
+end[i] == start[i] + duration[i] for i in tasks: end time = start time + duration
+complete >= end[i] for i in tasks: setup finish time to minimize
+start[j] >= end[i] for (i, j) in precedence: order of tasks
+sum(assignment[i][j] for j in teams) <= 1 for i in tasks: 1 task only assigned to at most 1 team
+start[i] >= available[j] if assignment[i][j] for (i, j) in costs.keys(): start doing tasks only after available
+**ensure no task is overlap for each team:**
+for j in teams:
+    if can_do[i][j]:
+        add interval(start[i], duration[i], end[i]) if assigned[i][j] for i in tasks
+    no overlap(interval)
+
+Objectives:
+Maximize(sum(assignment))
+Minimize(complete)
+Minimize(assignment[i][j] * cost[(i, j)] for (i, j) in costs.keys())
